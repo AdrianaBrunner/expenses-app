@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finanças da Casa (v1)</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --text:#2C2C2B;
+      --muted:#7D7A75;
+      --canvas:#FFFFFF;
+      --surface:#F9F8F7;
+      --surface2:#F0EFED;
+      --border:#E6E5E3;
+      --accent:#2783DE;
+      --accentSoft:#E5F2FC;
+      --green:#46A171;
+      --greenSoft:#E8F1EC;
+      --red:#E56458;
+      --redSoft:#FCE9E7;
+      --shadow:0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.04);
+      --radius:12px;
+      --radiusSm:10px;
+      --gap4:4px; --gap8:8px; --gap12:12px; --gap16:16px; --gap24:24px; --gap32:32px;
+      --mono: ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --canvas:#191919;
+        --surface:#202020;
+        --surface2:#2A2A2A;
+        --border:rgba(255,255,255,0.18);
+        --text:#FFFFFF;
+        --muted:rgba(255,255,255,0.65);
+        --accent:#5E9FE8;
+        --accentSoft:rgba(94,159,232,0.18);
+        --green:#72BC8F;
+        --greenSoft:rgba(114,188,143,0.14);
+        --red:#E97366;
+        --redSoft:rgba(233,115,102,0.14);
+        --shadow:none;
+      }
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:var(--sans);
+      color:var(--text);
+      background:var(--canvas);
+      line-height:1.5;
+    }
+    a{color:inherit}
+    .wrap{max-width:1120px; margin:0 auto; padding:24px;}
+    header{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+      padding:20px 20px; border:1px solid var(--border); border-radius:var(--radius);
+      background:linear-gradient(180deg, var(--surface), transparent);
+    }
+    .title{display:flex; gap:12px; align-items:flex-start}
+    .mark{
+      width:40px; height:40px; border-radius:12px;
+      background:var(--accentSoft);
+      display:grid; place-items:center;
+      border:1px solid var(--border);
+      flex:0 0 auto;
+    }
+    .mark svg{width:22px; height:22px;}
+    h1{font-size:18px; margin:0}
+    .subtitle{color:var(--muted); font-size:13px; margin-top:4px}
+
+    .topActions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end}
+
+    .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:16px; margin-top:16px;}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr;} }
+
+    .card{
+      border:1px solid var(--border);
+      background:var(--surface);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background:rgba(255,255,255,0.35);
+    }
+    @media (prefers-color-scheme: dark){ .cardHeader{background:rgba(255,255,255,0.04);} }
+
+    .cardHeader h2{font-size:14px; margin:0}
+    .cardHeader p{font-size:12px; margin:6px 0 0; color:var(--muted)}
+    .cardBody{padding:16px}
+
+    .kpis{display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;}
+    @media (max-width: 560px){ .kpis{grid-template-columns:1fr;} }
+    .kpi{
+      padding:14px 14px; border-radius:14px; border:1px solid var(--border);
+      background:var(--canvas);
+    }
+    .kpi .label{font-size:12px; color:var(--muted)}
+    .kpi .value{font-size:18px; margin-top:6px; font-weight:650; letter-spacing:-0.01em}
+    .kpi.positive{background:linear-gradient(180deg, var(--greenSoft), var(--canvas));}
+    .kpi.negative{background:linear-gradient(180deg, var(--redSoft), var(--canvas));}
+
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    @media (max-width: 560px){ .row{grid-template-columns:1fr;} }
+
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    input, select, textarea{
+      width:100%; padding:10px 10px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--canvas);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:76px; resize:vertical}
+    input:focus, select:focus, textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(39,131,222,0.15)}
+
+    .btn{
+      border:1px solid var(--border);
+      background:var(--canvas);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      font-weight:600;
+      cursor:pointer;
+      min-height:44px;
+    }
+    .btn.primary{background:var(--accent); color:white; border-color:transparent;}
+    .btn.danger{background:transparent; border-color:rgba(229,100,88,0.55); color:var(--red)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    .inline{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .hint{font-size:12px; color:var(--muted)}
+
+    .tableWrap{overflow:auto; border:1px solid var(--border); border-radius:14px; background:var(--canvas)}
+    table{width:100%; border-collapse:collapse; min-width:720px}
+    th,td{padding:10px 10px; border-bottom:1px solid var(--border); font-size:13px; text-align:left; white-space:nowrap}
+    th{font-size:12px; color:var(--muted); font-weight:650; position:sticky; top:0; background:var(--surface)}
+    tr:hover td{background:rgba(39,131,222,0.06)}
+    .pill{font-size:12px; padding:4px 8px; border-radius:999px; border:1px solid var(--border); background:var(--surface2)}
+    .pill.income{background:var(--greenSoft)}
+    .pill.expense{background:var(--redSoft)}
+
+    .paidRow td{background: var(--greenSoft)}
+    tr:hover.paidRow td{background: rgba(70,161,113,0.18)}
+
+    .sr{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden}
+    .toast{margin-top:10px; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--canvas); display:none}
+    .toast.show{display:block}
+
+    dialog{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:0;
+      width:min(560px, calc(100vw - 32px));
+      background:var(--canvas);
+      color:var(--text);
+      box-shadow:var(--shadow);
+    }
+    dialog::backdrop{background:rgba(0,0,0,.40)}
+    .dlgHead{padding:14px 16px; border-bottom:1px solid var(--border); background:var(--surface)}
+    .dlgBody{padding:16px}
+    .dlgFoot{padding:14px 16px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end}
+    .mono{font-family:var(--mono)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <div class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M4 19V5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M8 19V11" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M12 19V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M16 19V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M20 19V13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div>
+          <h1>Finanças da Casa (v1)</h1>
+          <div class="subtitle">Dados ficam <b>no seu navegador</b> (LocalStorage). Dá para compartilhar com seu marido hospedando em GitHub Pages / Firebase.</div>
+        </div>
+      </div>
+      <div class="topActions">
+        <button class="btn" id="btnCloneMonth">Replicar mês</button>
+        <button class="btn" id="btnSettings">Configurar</button>
+        <button class="btn" id="btnExport">Exportar JSON</button>
+        <label class="btn" style="display:inline-flex;align-items:center;gap:10px;">
+          Importar JSON
+          <input class="sr" type="file" id="fileImport" accept="application/json" />
+        </label>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card">
+        <div class="cardHeader">
+          <h2>Resumo do mês</h2>
+          <p>Escolha um mês e veja entradas/saídas e saldo. Salário fixo é configurável.</p>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <div>
+              <label for="month">Mês</label>
+              <input id="month" type="month" />
+            </div>
+            <div>
+              <label for="view">Visão</label>
+              <select id="view">
+                <option value="all">Todas as transações</option>
+                <option value="income">Somente receitas</option>
+                <option value="expense">Somente despesas</option>
+                <option value="unpaid">Somente pendentes</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+          <div class="kpis" aria-live="polite">
+            <div class="kpi positive">
+              <div class="label">Entradas (salários + extras)</div>
+              <div class="value" id="kpiIncome">R$ 0,00</div>
+            </div>
+            <div class="kpi negative">
+              <div class="label">Saídas (despesas)</div>
+              <div class="value" id="kpiExpense">R$ 0,00</div>
+            </div>
+            <div class="kpi">
+              <div class="label">Saldo do mês</div>
+              <div class="value" id="kpiBalance">R$ 0,00</div>
+            </div>
+          </div>
+
+          <div style="height:16px"></div>
+          <div class="tableWrap" role="region" aria-label="Tabela de transações">
+            <table>
+              <thead>
+                <tr>
+                  <th>Vencimento</th>
+                  <th>Tipo</th>
+                  <th>Categoria</th>
+                  <th>Descrição</th>
+                  <th>Valor</th>
+                  <th>Pago?</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+          <div class="hint" style="margin-top:10px">Para editar um item, clique em <b>Editar</b> na linha.</div>
+          <div class="hint" style="margin-top:10px">Dica: marque como “Pago” para controlar pendências. Você pode filtrar “Somente pendentes”.</div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="cardHeader">
+          <h2>Adicionar transação</h2>
+          <p>Cadastre despesas, receitas extras e ajuste salários fixos em Configurar.</p>
+        </div>
+        <div class="cardBody">
+          <form id="form">
+            <div class="row">
+              <div>
+                <label for="date">Vencimento</label>
+                <input id="date" type="date" required />
+              </div>
+              <div>
+                <label for="type">Tipo</label>
+                <select id="type" required>
+                  <option value="expense">Despesa</option>
+                  <option value="income">Receita extra</option>
+                </select>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <div class="row">
+              <div>
+                <label for="category">Categoria</label>
+                <select id="category" required>
+                  <option value="Consumo mensal">Consumo mensal</option>
+                  <option value="Cartão">Cartão</option>
+                  <option value="Outros">Outros</option>
+                </select>
+              </div>
+              <div>
+                <label for="amount">Valor (R$)</label>
+                <input id="amount" inputmode="decimal" placeholder="0,00" required />
+                <div class="hint" style="margin-top:6px">Digite números — o app formata em real.</div>
+              </div>
+            </div>
+            <div style="height:12px"></div>
+            <div>
+              <label for="desc">Descrição (opcional)</label>
+              <textarea id="desc" placeholder="Observações, parcelamento, etc."></textarea>
+            </div>
+            <div style="height:12px"></div>
+            <div class="inline" style="justify-content:space-between">
+              <label class="inline" style="gap:10px; color:var(--text)">
+                <input id="paid" type="checkbox" style="width:18px;height:18px" />
+                <span>Já está pago</span>
+              </label>
+              <button class="btn primary" type="submit">Adicionar</button>
+            </div>
+            <div class="toast" id="toast" role="status"></div>
+          </form>
+
+          <div style="height:16px"></div>
+          <div style="padding:12px; border-radius:14px; border:1px solid var(--border); background:linear-gradient(180deg, var(--accentSoft), transparent)">
+            <div style="font-weight:700; font-size:13px">Privacidade</div>
+            <div class="hint" style="margin-top:6px">
+              Nesta v1, os dados ficam salvos só no dispositivo/ navegador (LocalStorage). Para compartilhar com seu marido, vocês podem usar o mesmo link em PCs/celulares diferentes, mas cada um terá seus próprios dados — a menos que usem a opção <b>Exportar/Importar</b>.
+              <br /><br />Se quiser que os dados fiquem <b>na nuvem, com login</b> (Firebase Auth + Firestore), consigo montar uma v2.
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <dialog id="dlgSettings">
+    <div class="dlgHead">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px">
+        <div>
+          <div style="font-weight:800">Configurar</div>
+          <div class="hint">Salários fixos + opções de segurança.</div>
+        </div>
+        <button class="btn" id="btnCloseSettings">Fechar</button>
+      </div>
+    </div>
+    <div class="dlgBody">
+      <div class="row">
+        <div>
+          <label for="salary1">Salário 1 (R$)</label>
+          <input id="salary1" inputmode="decimal" placeholder="Ex: 3500" />
+        </div>
+        <div>
+          <label for="salary2">Salário 2 (R$)</label>
+          <input id="salary2" inputmode="decimal" placeholder="Ex: 5000" />
+        </div>
+      </div>
+
+      <div style="height:14px"></div>
+      <div style="padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface)">
+        <div style="font-weight:800; font-size:13px">Proteção simples (opcional)</div>
+        <div class="hint" style="margin-top:6px">
+          Isso <b>não substitui um login real</b>, mas evita acesso casual no mesmo dispositivo.
+        </div>
+        <div style="height:10px"></div>
+        <div class="row">
+          <div>
+            <label for="pin">PIN (4 a 10 dígitos)</label>
+            <input id="pin" class="mono" inputmode="numeric" placeholder="Ex: 1234" />
+          </div>
+          <div>
+            <label for="pinConfirm">Confirmar PIN</label>
+            <input id="pinConfirm" class="mono" inputmode="numeric" placeholder="Repita o PIN" />
+          </div>
+        </div>
+        <div class="hint" style="margin-top:8px">Quando o PIN estiver definido, o app pede o PIN ao abrir.</div>
+      </div>
+
+      <div style="height:14px"></div>
+      <div style="padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface)">
+        <div style="font-weight:800; font-size:13px">Zona de risco</div>
+        <div class="hint" style="margin-top:6px">Apagar tudo é irreversível (a menos que você tenha exportado antes).</div>
+        <div style="height:10px"></div>
+        <button class="btn danger" id="btnWipe" type="button">Apagar todos os dados</button>
+      </div>
+    </div>
+    <div class="dlgFoot">
+      <button class="btn primary" id="btnSaveSettings">Salvar</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgEdit">
+    <div class="dlgHead">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px">
+        <div>
+          <div style="font-weight:800">Editar transação</div>
+          <div class="hint" style="margin-top:4px">Atualize e salve.</div>
+        </div>
+        <button class="btn" id="btnCloseEdit">Fechar</button>
+      </div>
+    </div>
+    <div class="dlgBody">
+      <form id="editForm">
+        <input type="hidden" id="editId" />
+        <div class="row">
+          <div>
+            <label for="editDate">Vencimento</label>
+            <input id="editDate" type="date" required />
+          </div>
+          <div>
+            <label for="editType">Tipo</label>
+            <select id="editType" required>
+              <option value="expense">Despesa</option>
+              <option value="income">Receita extra</option>
+            </select>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="row">
+          <div>
+            <label for="editCategory">Categoria</label>
+            <select id="editCategory" required>
+              <option value="Consumo mensal">Consumo mensal</option>
+              <option value="Cartão">Cartão</option>
+              <option value="Outros">Outros</option>
+            </select>
+          </div>
+          <div>
+            <label for="editAmount">Valor (R$)</label>
+            <input id="editAmount" inputmode="decimal" placeholder="0,00" required />
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div>
+          <label for="editDesc">Descrição (opcional)</label>
+          <textarea id="editDesc" placeholder="Observações, parcelamento, etc."></textarea>
+        </div>
+        <div style="height:12px"></div>
+        <label class="inline" style="gap:10px; color:var(--text)">
+          <input id="editPaid" type="checkbox" style="width:18px;height:18px" />
+          <span>Já está pago</span>
+        </label>
+        <div class="toast" id="editToast" role="status" style="margin-top:10px"></div>
+      </form>
+    </div>
+    <div class="dlgFoot">
+      <button class="btn primary" id="btnSaveEdit">Salvar</button>
+    </div>
+  </dialog>
+
+  <dialog id="dlgPin">
+    <div class="dlgHead">
+      <div style="font-weight:800">Digite o PIN</div>
+      <div class="hint" style="margin-top:4px">Para acessar seus dados neste dispositivo.</div>
+    </div>
+    <div class="dlgBody">
+      <label for="pinEntry">PIN</label>
+      <input id="pinEntry" class="mono" inputmode="numeric" placeholder="•���••" />
+      <div class="toast" id="pinToast" role="status" style="margin-top:10px"></div>
+    </div>
+    <div class="dlgFoot">
+      <button class="btn primary" id="btnUnlock">Entrar</button>
+    </div>
+  </dialog>
+
+  <script>
+    const LS_KEY = 'finapp:v1:data'
+    const LS_PIN = 'finapp:v1:pinHash'
+
+    /** @typedef {{id:string,date:string,type:'income'|'expense',category:string,description?:string,amount:number,paid:boolean,createdAt:number}} Tx */
+
+    const fmtBRL = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' })
+
+    function todayISO(){
+      const d=new Date();
+      const pad=(n)=>String(n).padStart(2,'0')
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`
+    }
+
+    function monthISO(d=new Date()){
+      const pad=(n)=>String(n).padStart(2,'0')
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}`
+    }
+
+    function formatDateBR(iso){
+      // "YYYY-MM-DD" => "DD/MM/YYYY"
+      const s = String(iso||'')
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+      return `${s.slice(8,10)}/${s.slice(5,7)}/${s.slice(0,4)}`
+    }
+
+    function parseMoneyBR(input){
+      // Accepts "250,90", "250.90", "R$ 250,90".
+      const s=String(input||'').trim()
+        .replace(/\s/g,'')
+        .replace(/^R\$\s?/i,'')
+        .replace(/\./g,'')
+        .replace(',', '.')
+      const v=Number(s)
+      return Number.isFinite(v) ? v : NaN
+    }
+
+    function formatMoneyBRLInput(raw){
+      // keeps only digits, formats as cents => "1" => "0,01", "1234" => "12,34"
+      const digits = String(raw||'').replace(/\D/g,'')
+      if(!digits) return ''
+      const cents = digits.padStart(3,'0')
+      const intPart = cents.slice(0, -2)
+      const decPart = cents.slice(-2)
+      // thousand separators
+      const intFmt = intPart.replace(/^0+(\d)/,'$1').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+      return `${intFmt},${decPart}`
+    }
+
+    function uid(){ return crypto.getRandomValues(new Uint32Array(4)).join('-') }
+
+    function loadState(){
+      try{
+        const raw=localStorage.getItem(LS_KEY)
+        if(!raw) return { meta:{rev:0}, salaries:{s1:0,s2:0}, transactions:[] }
+        const parsed=JSON.parse(raw)
+        return {
+          meta:{ rev:Number(parsed?.meta?.rev||0) },
+          salaries:{ s1:Number(parsed?.salaries?.s1||0), s2:Number(parsed?.salaries?.s2||0) },
+          transactions:Array.isArray(parsed?.transactions) ? parsed.transactions : []
+        }
+      }catch(e){
+        return { meta:{rev:0}, salaries:{s1:0,s2:0}, transactions:[] }
+      }
+    }
+
+    function getLatestMeta(){
+      try{
+        const raw=localStorage.getItem(LS_KEY)
+        if(!raw) return { rev:0 }
+        const parsed=JSON.parse(raw)
+        return { rev:Number(parsed?.meta?.rev||0) }
+      }catch{ return { rev:0 } }
+    }
+
+    function saveState(state){
+      // Level 1 conflict detection (simula o "ETag"/versão do arquivo)
+      // Antes de salvar, confere se a versão em storage é a mesma que carregamos.
+      const latest = getLatestMeta()
+      const currentRev = Number(state?.meta?.rev||0)
+      if(latest.rev !== currentRev){
+        alert('Seus dados foram atualizados em outro lugar (ex.: outra aba).\n\nPara evitar sobrescrever, o app vai recarregar os dados mais recentes.')
+        state = loadState()
+        return state
+      }
+
+      const next = {
+        ...state,
+        meta:{ rev: currentRev + 1 },
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    }
+
+    async function sha256(text){
+      const enc=new TextEncoder().encode(text)
+      const hash=await crypto.subtle.digest('SHA-256', enc)
+      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('')
+    }
+
+    function toast(el, msg){
+      el.textContent=msg
+      el.classList.add('show')
+      clearTimeout(el._t)
+      el._t=setTimeout(()=>el.classList.remove('show'), 2400)
+    }
+
+    // Elements
+    const elMonth = document.getElementById('month')
+    const elView = document.getElementById('view')
+    const elTbody = document.getElementById('tbody')
+    const elKpiIncome = document.getElementById('kpiIncome')
+    const elKpiExpense = document.getElementById('kpiExpense')
+    const elKpiBalance = document.getElementById('kpiBalance')
+
+    const elForm = document.getElementById('form')
+    const elDate = document.getElementById('date')
+    const elType = document.getElementById('type')
+    const elCategory = document.getElementById('category')
+    const elAmount = document.getElementById('amount')
+    const elDesc = document.getElementById('desc')
+    const elPaid = document.getElementById('paid')
+    const elToast = document.getElementById('toast')
+
+    const btnCloneMonth = document.getElementById('btnCloneMonth')
+    const btnSettings = document.getElementById('btnSettings')
+    const btnExport = document.getElementById('btnExport')
+    const fileImport = document.getElementById('fileImport')
+
+    const dlgSettings = document.getElementById('dlgSettings')
+    const btnCloseSettings = document.getElementById('btnCloseSettings')
+    const btnSaveSettings = document.getElementById('btnSaveSettings')
+    const salary1 = document.getElementById('salary1')
+    const salary2 = document.getElementById('salary2')
+    const pin = document.getElementById('pin')
+    const pinConfirm = document.getElementById('pinConfirm')
+    const btnWipe = document.getElementById('btnWipe')
+
+    const dlgEdit = document.getElementById('dlgEdit')
+    const btnCloseEdit = document.getElementById('btnCloseEdit')
+    const btnSaveEdit = document.getElementById('btnSaveEdit')
+    const editId = document.getElementById('editId')
+    const editDate = document.getElementById('editDate')
+    const editType = document.getElementById('editType')
+    const editCategory = document.getElementById('editCategory')
+    const editAmount = document.getElementById('editAmount')
+    const editDesc = document.getElementById('editDesc')
+    const editPaid = document.getElementById('editPaid')
+    const editToast = document.getElementById('editToast')
+
+    const dlgPin = document.getElementById('dlgPin')
+    const pinEntry = document.getElementById('pinEntry')
+    const pinToast = document.getElementById('pinToast')
+    const btnUnlock = document.getElementById('btnUnlock')
+
+    // State
+    let state = loadState()
+
+    function monthStartEnd(yyyyMM){
+      const [y,m]=yyyyMM.split('-').map(Number)
+      const start=new Date(y, m-1, 1)
+      const end=new Date(y, m, 0)
+      const pad=(n)=>String(n).padStart(2,'0')
+      const startISO=`${y}-${pad(m)}-01`
+      const endISO=`${y}-${pad(m)}-${pad(end.getDate())}`
+      return { startISO, endISO }
+    }
+
+    function inMonth(txDate, yyyyMM){
+      return String(txDate||'').slice(0,7) === yyyyMM
+    }
+
+    function addMonths(yyyyMM, delta){
+      const [y,m]=yyyyMM.split('-').map(Number)
+      const d=new Date(y, (m-1)+delta, 1)
+      const pad=(n)=>String(n).padStart(2,'0')
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}`
+    }
+
+    function shiftDateToMonth(dateISO, targetYYYYMM){
+      const day = Number(String(dateISO||'').slice(8,10)) || 1
+      const [y,m] = targetYYYYMM.split('-').map(Number)
+      const lastDay = new Date(y, m, 0).getDate()
+      const dd = Math.min(day, lastDay)
+      const pad=(n)=>String(n).padStart(2,'0')
+      return `${y}-${pad(m)}-${pad(dd)}`
+    }
+
+    function compute(yyyyMM){
+      const salariesTotal = (state.salaries.s1||0) + (state.salaries.s2||0)
+      const txs = /** @type {Tx[]} */ (state.transactions || [])
+      const inMonthTx = txs.filter(t => inMonth(t.date, yyyyMM))
+      const incomeExtra = inMonthTx.filter(t=>t.type==='income').reduce((a,t)=>a+t.amount,0)
+      const expense = inMonthTx.filter(t=>t.type==='expense').reduce((a,t)=>a+t.amount,0)
+      const income = salariesTotal + incomeExtra
+      const balance = income - expense
+      return { salariesTotal, incomeExtra, income, expense, balance, inMonthTx }
+    }
+
+    function filterTx(txs){
+      const v = elView.value
+      if(v==='all') return txs
+      if(v==='income') return txs.filter(t=>t.type==='income')
+      if(v==='expense') return txs.filter(t=>t.type==='expense')
+      if(v==='unpaid') return txs.filter(t=>!t.paid)
+      return txs
+    }
+
+    function render(){
+      const yyyyMM = elMonth.value || monthISO()
+      const { income, expense, balance, inMonthTx } = compute(yyyyMM)
+
+      elKpiIncome.textContent = fmtBRL.format(income)
+      elKpiExpense.textContent = fmtBRL.format(expense)
+      elKpiBalance.textContent = fmtBRL.format(balance)
+
+      const txs = filterTx(inMonthTx).slice().sort((a,b)=> (a.date||'').localeCompare(b.date||'') || b.createdAt-a.createdAt)
+
+      elTbody.innerHTML = ''
+      if(txs.length===0){
+        const tr=document.createElement('tr')
+        tr.innerHTML = `<td colspan="7" style="padding:14px;color:var(--muted)">Nenhuma transação nesse mês com esse filtro.</td>`
+        elTbody.appendChild(tr)
+        return
+      }
+
+      for(const t of txs){
+        const tr=document.createElement('tr')
+        if(t.paid) tr.classList.add('paidRow')
+        tr.innerHTML = `
+          <td>${formatDateBR(t.date) || ''}</td>
+          <td><span class="pill ${t.type}">${t.type==='income' ? 'Receita' : 'Despesa'}</span></td>
+          <td>${escapeHtml(t.category||'')}</td>
+          <td style="max-width:260px; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(t.description||'')}</td>
+          <td style="font-weight:700">${fmtBRL.format(t.amount||0)}</td>
+          <td>
+            <label class="inline" style="gap:8px; cursor:pointer">
+              <input type="checkbox" ${t.paid ? 'checked' : ''} data-action="togglePaid" data-id="${t.id}" style="width:18px;height:18px" />
+              <span class="hint">${t.paid ? 'Sim' : 'Não'}</span>
+            </label>
+          </td>
+          <td style="text-align:right; display:flex; gap:8px; justify-content:flex-end">
+            <button class="btn" data-action="edit" data-id="${t.id}">Editar</button>
+            <button class="btn" data-action="delete" data-id="${t.id}">Excluir</button>
+          </td>
+        `
+        elTbody.appendChild(tr)
+      }
+    }
+
+    function escapeHtml(s){
+      return String(s||'')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;')
+    }
+
+    function seedDemoIfEmpty(){
+      if((state.transactions||[]).length>0) return
+      const baseMonth = monthISO()
+      const demo = [
+        { date:`${baseMonth}-05`, type:'expense', category:'Mercado', description:'Compras da semana', amount:325.00, paid:true },
+        { date:`${baseMonth}-08`, type:'expense', category:'Internet', description:'Plano mensal', amount:119.90, paid:false },
+        { date:`${baseMonth}-10`, type:'income', category:'Extra', description:'Venda / freelance', amount:500.00, paid:true },
+      ]
+      state.transactions = demo.map(d => ({...d, id:uid(), createdAt:Date.now()}))
+      saveState(state)
+    }
+
+    // Events
+    elMonth.addEventListener('change', render)
+    elView.addEventListener('change', render)
+
+    elForm.addEventListener('submit', (e)=>{
+      e.preventDefault()
+      const d = elDate.value
+      const type = /** @type {'income'|'expense'} */ (elType.value)
+      const category = elCategory.value
+      const amount = parseMoneyBR(elAmount.value)
+      const description = elDesc.value.trim()
+      const paid = Boolean(elPaid.checked)
+
+      if(!d){ toast(elToast, 'Informe a data.'); return }
+      if(!category){ toast(elToast, 'Informe a categoria.'); return }
+      if(!Number.isFinite(amount) || amount<=0){ toast(elToast, 'Valor inválido.'); return }
+
+      /** @type {Tx} */
+      const tx = { id:uid(), date:d, type, category, description, amount, paid, createdAt:Date.now() }
+      state.transactions = [tx, ...(state.transactions||[])]
+      state = saveState(state)
+
+      // reset minimal
+      elAmount.value=''
+      elDesc.value=''
+      elPaid.checked=false
+
+      toast(elToast, 'Transação adicionada.')
+      render()
+    })
+
+    function openEditById(id){
+      const t = (state.transactions||[]).find(x=>x.id===id)
+      if(!t){ alert('Não encontrei essa transação.'); return }
+      editId.value = t.id
+      editDate.value = t.date || ''
+      editType.value = t.type
+      editCategory.value = t.category || 'Outros'
+      editAmount.value = formatMoneyBRLInput(String(t.amount!=null ? Math.round(Number(t.amount)*100) : '')) || ''
+      editDesc.value = t.description || ''
+      editPaid.checked = Boolean(t.paid)
+      editToast.classList.remove('show')
+      dlgEdit.showModal()
+    }
+
+    elTbody.addEventListener('click', (e)=>{
+      const btn = /** @type {HTMLElement} */ (e.target)
+      const action = btn?.getAttribute?.('data-action')
+      const id = btn?.getAttribute?.('data-id')
+      if(action==='edit' && id){
+        openEditById(id)
+        return
+      }
+      if(action==='delete' && id){
+        const ok = confirm('Excluir esta transação?')
+        if(!ok) return
+        state.transactions = (state.transactions||[]).filter(t=>t.id!==id)
+        state = saveState(state)
+        render()
+      }
+    })
+
+    elTbody.addEventListener('change', (e)=>{
+      const input = /** @type {HTMLInputElement} */ (e.target)
+      const action = input?.getAttribute?.('data-action')
+      const id = input?.getAttribute?.('data-id')
+      if(action==='togglePaid' && id){
+        const checked = Boolean(input.checked)
+        state.transactions = (state.transactions||[]).map(t => t.id===id ? {...t, paid: checked} : t)
+        state = saveState(state)
+        render()
+      }
+    })
+
+    // BRL input mask
+    elAmount.addEventListener('input', ()=>{
+      const formatted = formatMoneyBRLInput(elAmount.value)
+      elAmount.value = formatted
+    })
+    editAmount.addEventListener('input', ()=>{
+      const formatted = formatMoneyBRLInput(editAmount.value)
+      editAmount.value = formatted
+    })
+
+    btnCloseEdit.addEventListener('click', ()=> dlgEdit.close())
+
+    btnSaveEdit.addEventListener('click', ()=>{
+      const id = editId.value
+      const d = editDate.value
+      const type = /** @type {'income'|'expense'} */ (editType.value)
+      const category = editCategory.value
+      const amount = parseMoneyBR(editAmount.value)
+      const description = editDesc.value.trim()
+      const paid = Boolean(editPaid.checked)
+
+      if(!id){ toast(editToast, 'ID inválido.'); return }
+      if(!d){ toast(editToast, 'Informe o vencimento.'); return }
+      if(!category){ toast(editToast, 'Informe a categoria.'); return }
+      if(!Number.isFinite(amount) || amount<=0){ toast(editToast, 'Valor inválido.'); return }
+
+      state.transactions = (state.transactions||[]).map(t => t.id===id ? ({...t, date:d, type, category, amount, description, paid}) : t)
+      state = saveState(state)
+      dlgEdit.close()
+      render()
+    })
+
+    btnSettings.addEventListener('click', ()=>{
+      salary1.value = state.salaries.s1 ? String(state.salaries.s1).replace('.', ',') : ''
+      salary2.value = state.salaries.s2 ? String(state.salaries.s2).replace('.', ',') : ''
+      pin.value = ''
+      pinConfirm.value = ''
+      dlgSettings.showModal()
+    })
+    btnCloseSettings.addEventListener('click', ()=> dlgSettings.close())
+
+    btnSaveSettings.addEventListener('click', async ()=>{
+      const s1 = salary1.value.trim() ? parseMoneyBR(salary1.value) : 0
+      const s2 = salary2.value.trim() ? parseMoneyBR(salary2.value) : 0
+      if(!Number.isFinite(s1) || s1<0){ alert('Salário 1 inválido.'); return }
+      if(!Number.isFinite(s2) || s2<0){ alert('Salário 2 inválido.'); return }
+
+      // Pin
+      const p = pin.value.trim()
+      const pc = pinConfirm.value.trim()
+      if(p || pc){
+        if(p!==pc){ alert('PIN e confirmação não batem.'); return }
+        if(!/^\d{4,10}$/.test(p)){ alert('PIN deve ter 4 a 10 dígitos.'); return }
+        const h = await sha256(p)
+        localStorage.setItem(LS_PIN, h)
+      }
+
+      state.salaries = { s1, s2 }
+      state = saveState(state)
+      dlgSettings.close()
+      render()
+      alert('Configurações salvas.')
+    })
+
+    btnWipe.addEventListener('click', ()=>{
+      const ok = confirm('Isso vai apagar TUDO (salários e transações) neste dispositivo. Continuar?')
+      if(!ok) return
+      localStorage.removeItem(LS_KEY)
+      localStorage.removeItem(LS_PIN)
+      state = loadState()
+      dlgSettings.close()
+      render()
+      alert('Dados apagados.')
+    })
+
+    btnCloneMonth.addEventListener('click', ()=>{
+      const from = elMonth.value || monthISO()
+      const to = addMonths(from, 1)
+      const fromTx = (state.transactions||[]).filter(t => inMonth(t.date, from))
+      if(fromTx.length===0){
+        alert('Não há transações para replicar nesse mês.')
+        return
+      }
+      const msg = `Vou copiar ${fromTx.length} transações de ${from} para ${to}.\n\nAs cópias vão ficar como NÃO pagas (pendentes) e você pode editar/excluir depois. Continuar?`
+      if(!confirm(msg)) return
+
+      const clones = fromTx.map(t => ({
+        ...t,
+        id: uid(),
+        date: shiftDateToMonth(t.date, to),
+        paid: false,
+        createdAt: Date.now(),
+      }))
+
+      state.transactions = [...clones, ...(state.transactions||[])]
+      state = saveState(state)
+      elMonth.value = to
+      render()
+      alert('Mês replicado!')
+    })
+
+    btnExport.addEventListener('click', ()=>{
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        data: loadState(),
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `financas-v1-${monthISO()}.json`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+    })
+
+    fileImport.addEventListener('change', async ()=>{
+      const f = fileImport.files?.[0]
+      if(!f) return
+      const txt = await f.text()
+      try{
+        const parsed = JSON.parse(txt)
+        if(!parsed?.data) throw new Error('Arquivo inválido')
+        const ok = confirm('Importar e substituir os dados atuais neste dispositivo?')
+        if(!ok) return
+        // Resetando versão ao importar
+        const incoming = parsed.data || {}
+        const merged = { meta:{rev:0}, salaries: incoming.salaries || {s1:0,s2:0}, transactions: incoming.transactions || [] }
+        localStorage.setItem(LS_KEY, JSON.stringify(merged))
+        state = loadState()
+        render()
+        alert('Importado com sucesso.')
+      }catch(err){
+        alert('Não consegui importar esse arquivo. Verifique se é um JSON exportado pelo app.')
+      }finally{
+        fileImport.value=''
+      }
+    })
+
+    // PIN gate
+    async function ensureUnlocked(){
+      const pinHash = localStorage.getItem(LS_PIN)
+      if(!pinHash) return true
+      return new Promise((resolve)=>{
+        pinEntry.value=''
+        pinToast.classList.remove('show')
+        dlgPin.showModal()
+
+        async function tryUnlock(){
+          const p = pinEntry.value.trim()
+          if(!/^\d{4,10}$/.test(p)){
+            toast(pinToast, 'PIN inválido.')
+            return
+          }
+          const h = await sha256(p)
+          if(h!==pinHash){
+            toast(pinToast, 'PIN incorreto.')
+            return
+          }
+          dlgPin.close()
+          btnUnlock.removeEventListener('click', tryUnlock)
+          pinEntry.removeEventListener('keydown', onKey)
+          resolve(true)
+        }
+        function onKey(ev){ if(ev.key==='Enter') tryUnlock() }
+        btnUnlock.addEventListener('click', tryUnlock)
+        pinEntry.addEventListener('keydown', onKey)
+      })
+    }
+
+    // Init
+    ;(async function init(){
+      elMonth.value = monthISO()
+      elDate.value = todayISO()
+      seedDemoIfEmpty()
+      const ok = await ensureUnlocked()
+      if(ok){
+        state = loadState()
+        render()
+      }
+    })()
+  </script>
+</body>
+</html>
